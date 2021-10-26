@@ -1,6 +1,6 @@
 # Practice Assignment 3 #
 
-Construct an SQLite Database clled airline2.db with the following tables: 
+Construct an SQLite Database called airline2.db with the following tables: 
 1. ONTIME 
 2. AIRPORTS
 3. CARRIERS
