@@ -41,8 +41,8 @@ GROUP BY Dest
 ORDER BY COUNT(Dest) DESC LIMIT 1")
 
 Q3 <- dbGetQuery(conn,
-"SELECT Description AS 'Carrier Name', COUNT(Cancelled) AS 'No. of Cancelled Flights'
-FROM CARRIERS, ONTIME 
+"SELECT Description AS 'Carrier', COUNT(Cancelled) AS 'No. of Cancelled Flights'
+FROM CARRIERS c, ONTIME o
 WHERE o.UniqueCarrier = c.Code
 AND Cancelled = 1
 GROUP BY Description
@@ -50,7 +50,7 @@ ORDER BY COUNT(Cancelled) DESC LIMIT 1")
 
 Q4 <- dbGetQuery(conn,
 "SELECT Description AS 'Carrier', ROUND(SUM(Cancelled)*100.0/ COUNT(UniqueCarrier), 1) AS 'Cancelled Flights'
-FROM two o, CARRIERS c
+FROM ONTIME o, CARRIERS c
 WHERE o.UniqueCarrier = c.Code
 GROUP BY Description
 ORDER BY ROUND(SUM(Cancelled)*100.0/ COUNT(UniqueCarrier), 1) DESC LIMIT 1")
