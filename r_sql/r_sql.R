@@ -56,6 +56,7 @@ GROUP BY Description
 ORDER BY ROUND(SUM(Cancelled)*100.0/ COUNT(UniqueCarrier), 1) DESC LIMIT 1")
 
 #Print and export results to .txt file
+setwd("D:/st2187/asgnmt3/r_sql")
 cat(Q1, Q2, Q3, Q4, file="query_results.txt", sep="\n")
 
 
