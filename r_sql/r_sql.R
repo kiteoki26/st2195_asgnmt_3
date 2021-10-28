@@ -24,7 +24,7 @@ dbWriteTable(conn, "PLANES", planes)
 
 #Queries
 Q1 <- dbGetQuery(conn,
-"SELECT model, AVG(DepDelay) AS 'Departure Delay'
+"SELECT model, AVG(DepDelay) AS 'Avg. Departure Delay'
 FROM PLANES p, ONTIME o
 WHERE p.tailnum = o.Tailnum
 AND DepDelay > 0
@@ -33,31 +33,60 @@ AND Diverted = 0
 GROUP BY model
 ORDER BY AVG(DepDelay) ASC LIMIT 1")
 
+Q1_dplyr <- ontime %>%
+  filter(Cancelled==0, Diverted==0, DepDelay>0)%>%
+  inner_join(planes, by=c('TailNum' = 'tailnum'))%>%
+  group_by(model) %>%
+  summarize(avg_DepDelay=mean(DepDelay, na.rm=TRUE))%>%
+  arrange(avg_DepDelay)%>%
+  top_n(-1)
+
 Q2 <- dbGetQuery(conn,
-"SELECT Dest as 'City', COUNT(Dest) AS 'Number of Inbound Flights'
+"SELECT Dest as 'City', COUNT(Dest) AS 'Inbound Flights'
 FROM ONTIME 
 WHERE Cancelled = 0
 GROUP BY Dest
 ORDER BY COUNT(Dest) DESC LIMIT 1")
 
+Q2_dplyr <- ontime %>%
+  filter(Cancelled==0)%>%
+  group_by(city=Dest)%>%
+  summarize(Dest=n())%>%
+  top_n(1)
+
 Q3 <- dbGetQuery(conn,
-"SELECT Description AS 'Carrier', COUNT(Cancelled) AS 'No. of Cancelled Flights'
+"SELECT Description AS 'Carrier', COUNT(Cancelled) AS 'Cancelled Flights'
 FROM CARRIERS c, ONTIME o
 WHERE o.UniqueCarrier = c.Code
 AND Cancelled = 1
 GROUP BY Description
 ORDER BY COUNT(Cancelled) DESC LIMIT 1")
 
+
+Q3_dplyr <- ontime %>%
+  filter(Cancelled==1)%>%
+  inner_join(carriers, by=c('UniqueCarrier'='Code'))%>%
+  group_by(carrier = Description)%>%
+  summarize(Cancelled=n())%>%
+  arrange(Cancelled)%>%
+  top_n(1)
+
+  
 Q4 <- dbGetQuery(conn,
-"SELECT Description AS 'Carrier', ROUND(SUM(Cancelled)*100.0/ COUNT(UniqueCarrier), 1) AS 'Cancelled Flights'
+"SELECT Description AS 'Carrier', ROUND(SUM(Cancelled)*100.0/ COUNT(UniqueCarrier), 3) AS 'Cancelled Flights to Inbound Flights % Ratio'
 FROM ONTIME o, CARRIERS c
 WHERE o.UniqueCarrier = c.Code
 GROUP BY Description
 ORDER BY ROUND(SUM(Cancelled)*100.0/ COUNT(UniqueCarrier), 1) DESC LIMIT 1")
 
-#Print and export results to .txt file
-setwd("D:/st2187/asgnmt3/r_sql")
-cat(Q1, Q2, Q3, Q4, file="query_results.txt", sep="\n")
 
-
+Q4_dplyr <- ontime %>%
+  inner_join(carriers, by=c('UniqueCarrier'='Code'))%>%
+  group_by(carrier=Description) %>%
+  summarize(across(Cancelled=sum()), across(UniqueCarrier=n()))%>%
+  mutate(freq_ratio=round(Cancelled/UniqueCarrier*100),3)%>%
+  arrange(freq_ratio)%>%
+  top_n(10)
+  
+  
   
