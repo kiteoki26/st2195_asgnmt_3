@@ -42,15 +42,17 @@ Q1_dplyr <- ontime %>%
   top_n(-1)
 
 Q2 <- dbGetQuery(conn,
-"SELECT Dest as 'City', COUNT(Dest) AS 'Inbound Flights'
-FROM ONTIME 
+"SELECT city, COUNT(Dest) AS 'Inbound Flights'
+FROM ONTIME o, AIRPORTS a 
 WHERE Cancelled = 0
+AND o.Dest = a.iata
 GROUP BY Dest
 ORDER BY COUNT(Dest) DESC LIMIT 1")
 
 Q2_dplyr <- ontime %>%
   filter(Cancelled==0)%>%
-  group_by(city=Dest)%>%
+  inner_join(airports, by=c('Dest' = 'iata'))%>%
+  group_by(Dest)%>%
   summarize(Dest=n())%>%
   top_n(1)
 
